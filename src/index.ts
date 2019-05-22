@@ -1,7 +1,7 @@
 'use strict';
 
 import * as assert from 'assert';
-import { Before, Given, HookScenarioResult } from 'cucumber';
+import { Before, Given, HookScenarioResult, Then, When } from 'cucumber';
 import * as _ from 'lodash';
 
 import { RequisitionAdopter } from 'enqueuer/js/components/requisition-adopter';
@@ -37,12 +37,25 @@ export class EnqueuerStepDefinitions {
         this.buildSteps();
     }
 
+    public addFile(file: string) {
+        Configuration.getInstance().getFiles().push(file);
+    }
+
+    public addPlugin(plugin: string) {
+        Configuration.getInstance().addPlugin(plugin);
+    }
+
     private buildSteps() {
+        this.buildRequisitionSteps();
+        this.buildSubscriptionsSteps();
+        this.buildPublishersSteps();
+    }
+
+    private buildRequisitionSteps() {
         this.requisitionsCache.forEach(requisition => {
+            const self = this;
             Given(requisition.name, function () {
-                const requisitionReport = this.testReport.requisitions.find(
-                    (req: RequisitionModel) => req.name === requisition.name
-                );
+                const requisitionReport = self.findRequisitionReport(this.testReport, requisition.name);
                 if (requisitionReport.tests) {
                     requisitionReport.tests.forEach((test: RequisitionModel) => {
                         assert(test.valid, test.description);
@@ -50,6 +63,82 @@ export class EnqueuerStepDefinitions {
                 }
             });
         });
+    }
+
+    private buildPublishersSteps() {
+        this.publishersCache.forEach(publisher => {
+            const self = this;
+            When(publisher.name, function () {
+                const publisherReport = self.findPublisherReport(this.testReport, publisher.name);
+                if (publisherReport.tests) {
+                    publisherReport.tests.forEach((test: RequisitionModel) => {
+                        assert(test.valid, test.description);
+                    });
+                }
+            });
+        });
+    }
+
+    private buildSubscriptionsSteps() {
+        this.subscriptionsCache.forEach(subscription => {
+            const self = this;
+            Then(subscription.name, function () {
+                const subscriptionReport = self.findSubscriptionReport(this.testReport, subscription.name);
+                if (subscriptionReport.tests) {
+                    subscriptionReport.tests.forEach((test: RequisitionModel) => {
+                        assert(test.valid, test.description);
+                    });
+                }
+            });
+        });
+    }
+
+    private findSubscriptionReport(requisition: RequisitionModel, name: string) {
+        if (!requisition) {
+            return null;
+        }
+        let subscriptionReport = requisition.subscriptions.find((sub: SubscriptionModel) => sub.name === name);
+        if (!subscriptionReport) {
+            for (const req of requisition.requisitions) {
+                subscriptionReport = this.findSubscriptionReport(req, name);
+                if (subscriptionReport) {
+                    return subscriptionReport;
+                }
+            }
+        }
+        return subscriptionReport;
+    }
+
+    private findPublisherReport(requisition: RequisitionModel, name: string) {
+        if (!requisition) {
+            return null;
+        }
+        let publisherReport = requisition.publishers.find((sub: PublisherModel) => sub.name === name);
+        if (!publisherReport) {
+            for (const req of requisition.requisitions) {
+                publisherReport = this.findPublisherReport(req, name);
+                if (publisherReport) {
+                    return publisherReport;
+                }
+            }
+        }
+        return publisherReport;
+    }
+
+    private findRequisitionReport(requisitions: Array<RequisitionModel>, name: string) {
+        if (!requisitions) {
+            return null;
+        }
+        let requisitionReport = requisitions.find((req: RequisitionModel) => req.name === name);
+        if (!requisitionReport) {
+            for (const requisition of requisitions) {
+                requisitionReport = this.findRequisitionReport(requisition.requisitions, name);
+                if (requisitionReport) {
+                    return requisitionReport;
+                }
+            }
+        }
+        return requisitionReport;
     }
 
     private async executeEnqueuer(requisition: RequisitionModel) {
@@ -84,8 +173,13 @@ export class EnqueuerStepDefinitions {
         }
         requisition.publishers = [];
         requisition.subscriptions = [];
+        requisition.requisitions = [];
 
         testcase.pickle.steps.forEach(step => {
+            if (this.requisitionsCache.has(step.text)) {
+                const innerRequisition = this.requisitionsCache.get(step.text);
+                requisition.requisitions.push(_.chain(innerRequisition).omit('publishers', 'subscriptions').clone().value());
+            }
             if (this.publishersCache.has(step.text)) {
                 requisition.publishers.push(_.clone(this.publishersCache.get(step.text)));
             }
