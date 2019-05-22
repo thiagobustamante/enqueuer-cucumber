@@ -1,0 +1,84 @@
+{
+  "name": "enqueuer-cucumber",
+  "version": "1.0.0",
+  "description": "Plugin to implement cucumber steps as enqueuer requisitions",
+  "main": "./dist/index.js",
+  "typings": "./dist/index.d.ts",
+  "scripts": {
+    "start": "tsc -w",
+    "build": "npm run clean && tsc",
+    "clean": "rimraf dist",
+    "lint": "tslint ./src/**/*.ts ./test/**/*.ts",
+    "lint:fix": "tslint --fix ./src/**/*.ts ./test/**/*.ts -t verbose",
+    "pretest": "cross-env NODE_ENV=test npm run build && npm run lint",
+    "test": "cross-env NODE_ENV=test mocha --exit",
+    "test:coverage": "nyc npm test",
+    "tsc": "tsc"
+  },
+  "author": "Thiago da Rosa de Bustamante <thiago@cruxframework.org>",
+  "keywords": [
+    "Tests",
+    "Cucumber",
+    "Enqueuer",
+    "Integration Tests",
+    "Acceptance Tests"
+  ],
+  "license": "MIT",
+  "nyc": {
+    "include": [
+      "src/**/*.ts"
+    ],
+    "extension": [
+      ".ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ],
+    "reporter": [
+      "text-summary",
+      "json",
+      "html"
+    ],
+    "report-dir": "./reports/coverage",
+    "sourceMap": true,
+    "instrument": true
+  },
+  "dependencies": {
+    "assert": "^2.0.0",
+    "cucumber": "^5.1.0",
+    "enqueuer": "^4.6.0",
+    "lodash": "^4.17.11"
+  },
+  "devDependencies": {
+    "@types/assert": "^1.4.2",
+    "@types/chai": "^4.1.7",
+    "@types/cucumber": "^4.0.5",
+    "@types/lodash": "^4.14.119",
+    "@types/mocha": "^5.2.5",
+    "chai": "^4.2.0",
+    "codecov": "^3.3.0",
+    "cross-env": "^5.2.0",
+    "mocha": "^5.2.0",
+    "nyc": "^14.1.1",
+    "rimraf": "^2.6.3",
+    "source-map-support": "^0.5.9",
+    "ts-node": "^7.0.1",
+    "tslint": "^5.15.0",
+    "tslint-config-prettier": "^1.17.0",
+    "typescript": "^3.2.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thiagobustamante/enqueuer-cucumber.git"
+  },
+  "bugs": {
+    "url": "https://github.com/thiagobustamante/enqueuer-cucumber/issues"
+  },
+  "directories": {
+    "lib": "dist"
+  },
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "engineStrict": true
+}
