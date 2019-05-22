@@ -39,10 +39,12 @@ export class EnqueuerStepDefinitions {
 
     public addFile(file: string) {
         Configuration.getInstance().getFiles().push(file);
+        return this;
     }
 
     public addPlugin(plugin: string) {
         Configuration.getInstance().addPlugin(plugin);
+        return this;
     }
 
     private buildSteps() {
@@ -93,14 +95,15 @@ export class EnqueuerStepDefinitions {
         });
     }
 
-    private findSubscriptionReport(requisition: RequisitionModel, name: string) {
-        if (!requisition) {
+    private findSubscriptionReport(requisitions: Array<RequisitionModel>, name: string): SubscriptionModel {
+        if (!requisitions) {
             return null;
         }
-        let subscriptionReport = requisition.subscriptions.find((sub: SubscriptionModel) => sub.name === name);
-        if (!subscriptionReport) {
-            for (const req of requisition.requisitions) {
-                subscriptionReport = this.findSubscriptionReport(req, name);
+        let subscriptionReport = null;
+        for (const requisition of requisitions) {
+            subscriptionReport = requisition.subscriptions.find((sub: SubscriptionModel) => sub.name === name);
+            if (!subscriptionReport) {
+                subscriptionReport = this.findSubscriptionReport(requisition.requisitions, name);
                 if (subscriptionReport) {
                     return subscriptionReport;
                 }
@@ -109,14 +112,15 @@ export class EnqueuerStepDefinitions {
         return subscriptionReport;
     }
 
-    private findPublisherReport(requisition: RequisitionModel, name: string) {
-        if (!requisition) {
+    private findPublisherReport(requisitions: Array<RequisitionModel>, name: string): PublisherModel {
+        if (!requisitions) {
             return null;
         }
-        let publisherReport = requisition.publishers.find((sub: PublisherModel) => sub.name === name);
-        if (!publisherReport) {
-            for (const req of requisition.requisitions) {
-                publisherReport = this.findPublisherReport(req, name);
+        let publisherReport = null;
+        for (const requisition of requisitions) {
+            publisherReport = requisition.publishers.find((sub: PublisherModel) => sub.name === name);
+            if (!publisherReport) {
+                publisherReport = this.findPublisherReport(requisition.requisitions, name);
                 if (publisherReport) {
                     return publisherReport;
                 }
@@ -125,7 +129,7 @@ export class EnqueuerStepDefinitions {
         return publisherReport;
     }
 
-    private findRequisitionReport(requisitions: Array<RequisitionModel>, name: string) {
+    private findRequisitionReport(requisitions: Array<RequisitionModel>, name: string): RequisitionModel {
         if (!requisitions) {
             return null;
         }
