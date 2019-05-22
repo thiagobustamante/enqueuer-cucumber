@@ -57,7 +57,7 @@
     "codecov": "^3.3.0",
     "cross-env": "^5.2.0",
     "cucumber": "^5.1.0",
-    "enqueuer": "^4.6.0",
+    "enqueuer": "^4.6.3",
     "mocha": "^5.2.0",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.3",
