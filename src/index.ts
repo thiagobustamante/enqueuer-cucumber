@@ -1,6 +1,7 @@
 'use strict';
 
 import { Before, HookScenarioResult } from 'cucumber';
+import debug from 'debug';
 import * as _ from 'lodash';
 
 import { RequisitionAdopter } from 'enqueuer/js/components/requisition-adopter';
@@ -13,12 +14,20 @@ import { RequisitionFilePatternParser } from 'enqueuer/js/requisition-runners/re
 import { RequisitionRunner } from 'enqueuer/js/requisition-runners/requisition-runner';
 import { CucumberStepsBuilder } from './cucumber-steps';
 
+debug.formatters.J = (v) => {
+    return JSON.stringify(v, null, 2);
+};
+
 export class EnqueuerStepDefinitions {
     private requisitionsCache: Map<string, RequisitionModel>;
     private publishersCache: Map<string, PublisherModel>;
     private subscriptionsCache: Map<string, SubscriptionModel>;
     private requisitionFileParser: RequisitionFilePatternParser;
     private cucumberStepsBuilder: CucumberStepsBuilder;
+    private debugger = {
+        build: debug('EnqueuerCucumber:Build'),
+        runtime: debug('EnqueuerCucumber:Runtime')
+    };
 
     constructor() {
         this.requisitionsCache = new Map<string, RequisitionModel>();
@@ -28,6 +37,7 @@ export class EnqueuerStepDefinitions {
     }
 
     public build() {
+        this.debugger.build('Starting EnqueuerStepDefinitions plugin');
         this.initEnqueuer();
         const self: EnqueuerStepDefinitions = this;
         Before(async function (testcase: HookScenarioResult) {
@@ -50,30 +60,19 @@ export class EnqueuerStepDefinitions {
     }
 
     private buildSteps() {
-        this.buildRequisitionSteps();
-        this.buildSubscriptionsSteps();
-        this.buildPublishersSteps();
-    }
-
-    private buildRequisitionSteps() {
         this.requisitionsCache.forEach(requisition => {
             this.cucumberStepsBuilder.createGivenStep(requisition);
         });
-    }
-
-    private buildPublishersSteps() {
         this.publishersCache.forEach(publisher => {
             this.cucumberStepsBuilder.createWhenStep(publisher);
         });
-    }
-
-    private buildSubscriptionsSteps() {
         this.subscriptionsCache.forEach(subscription => {
             this.cucumberStepsBuilder.createThenStep(subscription);
         });
     }
 
     private async executeEnqueuer(requisition: RequisitionModel) {
+        this.debugger.runtime('Executing requisition <<%s>> in Enqueuer', requisition.name);
         const configuration = Configuration.getInstance();
         const enqueuerRequisition = new RequisitionAdopter(
             {
@@ -90,10 +89,13 @@ export class EnqueuerStepDefinitions {
             report.valid = report.valid && reportModelIsPassing(report);
         });
 
+        this.debugger.runtime('Report execution for requisition <<%s>>: %J', requisition.name, finalReports);
         return finalReports;
     }
 
     private buildEnqueuerRequisition(testcase: HookScenarioResult) {
+        this.debugger.runtime('Building enqueuer requisition for test execution: <<%s>>', testcase.pickle.name);
+        this.debugger.runtime('Cucumber metadata for test: %J', testcase);
         const enqueuerRequisition = this.requisitionsCache.get(testcase.pickle.name);
         let requisition: any;
         if (enqueuerRequisition) {
@@ -120,17 +122,21 @@ export class EnqueuerStepDefinitions {
             }
         });
 
+        this.debugger.runtime('Enqueuer requisition created: %J', requisition);
         return requisition;
     }
 
     private initEnqueuer() {
+        this.debugger.build('Initializing enqueuer');
         const configuration = Configuration.getInstance();
         this.requisitionFileParser = new RequisitionFilePatternParser(configuration.getFiles());
         const enqueuerRequisitions = this.requisitionFileParser.parse();
+        this.debugger.build('Enqueuer Requisitions loaded: %J', enqueuerRequisitions);
         this.buildRequisitionsCache(enqueuerRequisitions);
     }
 
     private buildRequisitionsCache(requisitions: Array<RequisitionModel>) {
+        this.debugger.build('Building cache for enqueuer requisitions');
         requisitions.forEach(requisition => {
             this.requisitionsCache.set(requisition.name, requisition);
             if (requisition.publishers) {
@@ -147,5 +153,10 @@ export class EnqueuerStepDefinitions {
                 this.buildRequisitionsCache(requisition.requisitions);
             }
         });
+        if (this.debugger.build.enabled) {
+            this.debugger.build('Requisitions cache ready: %J', Array.from(this.requisitionsCache.keys()));
+            this.debugger.build('Publishers cache ready: %J', Array.from(this.publishersCache.keys()));
+            this.debugger.build('Subscriptions cache ready: %J', Array.from(this.subscriptionsCache.keys()));
+        }
     }
 }

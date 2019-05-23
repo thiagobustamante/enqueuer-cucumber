@@ -6,11 +6,20 @@ import { PublisherModel } from 'enqueuer/js/models/inputs/publisher-model';
 import { RequisitionModel } from 'enqueuer/js/models/inputs/requisition-model';
 import { SubscriptionModel } from 'enqueuer/js/models/inputs/subscription-model';
 
+import debug from 'debug';
+
 export class CucumberStepsBuilder {
+    private debugger = {
+        build: debug('EnqueuerCucumber:Build'),
+        runtime: debug('EnqueuerCucumber:Runtime')
+    };
+
     public createGivenStep(requisition: RequisitionModel) {
         const self = this;
+        this.debugger.build('Creating Given Step for requisition <<%s>>', requisition.name);
         Given(requisition.name, function () {
             const requisitionReport = self.findRequisitionReport(this.testReport, requisition.name);
+            self.debugger.runtime('Enqueuer report for <<%s>>: %J', requisition.name, requisitionReport);
             if (requisitionReport.tests) {
                 requisitionReport.tests.forEach((test: RequisitionModel) => {
                     assert(test.valid, test.description);
@@ -21,8 +30,10 @@ export class CucumberStepsBuilder {
 
     public createWhenStep(publisher: PublisherModel) {
         const self = this;
+        this.debugger.build('Creating When Step for publisher <<%s>>', publisher.name);
         When(publisher.name, function () {
             const publisherReport = self.findPublisherReport(this.testReport, publisher.name);
+            self.debugger.runtime('Enqueuer report for <<%s>>: %J', publisher.name, publisherReport);
             if (publisherReport.tests) {
                 publisherReport.tests.forEach((test: RequisitionModel) => {
                     assert(test.valid, test.description);
@@ -33,8 +44,10 @@ export class CucumberStepsBuilder {
 
     public createThenStep(subscription: SubscriptionModel) {
         const self = this;
+        this.debugger.build('Creating Then Step for subscription <<%s>>', subscription.name);
         Then(subscription.name, function () {
             const subscriptionReport = self.findSubscriptionReport(this.testReport, subscription.name);
+            self.debugger.runtime('Enqueuer report for <<%s>>: %J', subscription.name, subscriptionReport);
             if (subscriptionReport.tests) {
                 subscriptionReport.tests.forEach((test: RequisitionModel) => {
                     assert(test.valid, test.description);
