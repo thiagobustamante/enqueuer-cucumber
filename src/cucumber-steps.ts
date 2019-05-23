@@ -11,7 +11,7 @@ import debug from 'debug';
 export class CucumberStepsBuilder {
     private debugger = {
         build: debug('EnqueuerCucumber:Build'),
-        runtime: debug('EnqueuerCucumber:Runtime')
+        runtime: debug('EnqueuerCucumber:Runtime:Reports')
     };
 
     public createGivenStep(requisition: RequisitionModel) {
