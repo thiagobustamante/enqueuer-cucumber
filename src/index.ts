@@ -1,7 +1,6 @@
 'use strict';
 
-import * as assert from 'assert';
-import { Before, Given, HookScenarioResult, Then, When } from 'cucumber';
+import { Before, HookScenarioResult } from 'cucumber';
 import * as _ from 'lodash';
 
 import { RequisitionAdopter } from 'enqueuer/js/components/requisition-adopter';
@@ -12,17 +11,20 @@ import { SubscriptionModel } from 'enqueuer/js/models/inputs/subscription-model'
 import { reportModelIsPassing } from 'enqueuer/js/models/outputs/report-model';
 import { RequisitionFilePatternParser } from 'enqueuer/js/requisition-runners/requisition-file-pattern-parser';
 import { RequisitionRunner } from 'enqueuer/js/requisition-runners/requisition-runner';
+import { CucumberStepsBuilder } from './cucumber-steps';
 
 export class EnqueuerStepDefinitions {
     private requisitionsCache: Map<string, RequisitionModel>;
     private publishersCache: Map<string, PublisherModel>;
     private subscriptionsCache: Map<string, SubscriptionModel>;
     private requisitionFileParser: RequisitionFilePatternParser;
+    private cucumberStepsBuilder: CucumberStepsBuilder;
 
     constructor() {
         this.requisitionsCache = new Map<string, RequisitionModel>();
         this.publishersCache = new Map<string, PublisherModel>();
         this.subscriptionsCache = new Map<string, SubscriptionModel>();
+        this.cucumberStepsBuilder = new CucumberStepsBuilder();
     }
 
     public build() {
@@ -55,94 +57,20 @@ export class EnqueuerStepDefinitions {
 
     private buildRequisitionSteps() {
         this.requisitionsCache.forEach(requisition => {
-            const self = this;
-            Given(requisition.name, function () {
-                const requisitionReport = self.findRequisitionReport(this.testReport, requisition.name);
-                if (requisitionReport.tests) {
-                    requisitionReport.tests.forEach((test: RequisitionModel) => {
-                        assert(test.valid, test.description);
-                    });
-                }
-            });
+            this.cucumberStepsBuilder.createGivenStep(requisition);
         });
     }
 
     private buildPublishersSteps() {
         this.publishersCache.forEach(publisher => {
-            const self = this;
-            When(publisher.name, function () {
-                const publisherReport = self.findPublisherReport(this.testReport, publisher.name);
-                if (publisherReport.tests) {
-                    publisherReport.tests.forEach((test: RequisitionModel) => {
-                        assert(test.valid, test.description);
-                    });
-                }
-            });
+            this.cucumberStepsBuilder.createWhenStep(publisher);
         });
     }
 
     private buildSubscriptionsSteps() {
         this.subscriptionsCache.forEach(subscription => {
-            const self = this;
-            Then(subscription.name, function () {
-                const subscriptionReport = self.findSubscriptionReport(this.testReport, subscription.name);
-                if (subscriptionReport.tests) {
-                    subscriptionReport.tests.forEach((test: RequisitionModel) => {
-                        assert(test.valid, test.description);
-                    });
-                }
-            });
+            this.cucumberStepsBuilder.createThenStep(subscription);
         });
-    }
-
-    private findSubscriptionReport(requisitions: Array<RequisitionModel>, name: string): SubscriptionModel {
-        if (!requisitions) {
-            return null;
-        }
-        let subscriptionReport = null;
-        for (const requisition of requisitions) {
-            subscriptionReport = requisition.subscriptions.find((sub: SubscriptionModel) => sub.name === name);
-            if (!subscriptionReport) {
-                subscriptionReport = this.findSubscriptionReport(requisition.requisitions, name);
-                if (subscriptionReport) {
-                    return subscriptionReport;
-                }
-            }
-        }
-        return subscriptionReport;
-    }
-
-    private findPublisherReport(requisitions: Array<RequisitionModel>, name: string): PublisherModel {
-        if (!requisitions) {
-            return null;
-        }
-        let publisherReport = null;
-        for (const requisition of requisitions) {
-            publisherReport = requisition.publishers.find((sub: PublisherModel) => sub.name === name);
-            if (!publisherReport) {
-                publisherReport = this.findPublisherReport(requisition.requisitions, name);
-                if (publisherReport) {
-                    return publisherReport;
-                }
-            }
-        }
-        return publisherReport;
-    }
-
-    private findRequisitionReport(requisitions: Array<RequisitionModel>, name: string): RequisitionModel {
-        if (!requisitions) {
-            return null;
-        }
-        let requisitionReport = requisitions.find((req: RequisitionModel) => req.name === name);
-        if (!requisitionReport) {
-            for (const requisition of requisitions) {
-                requisitionReport = this.findRequisitionReport(requisition.requisitions, name);
-                if (requisitionReport) {
-                    return requisitionReport;
-                }
-            }
-        }
-        return requisitionReport;
     }
 
     private async executeEnqueuer(requisition: RequisitionModel) {
