@@ -31,7 +31,7 @@ Feature: Tickets issuing for my Tickets Service
 
   Scenario: Issue a ticket for a given order
     Given I have an order to buy a ticket for a desired event
-    When I receive a payment event for that order
+    When I receive a payment notification for that order
     Then I should call the issuing API
     And I uptade the order with the tickets
 ```
@@ -45,7 +45,7 @@ requisitions:
       store:
           orderId: order123
 - publishers:
-  -   name: I receive a payment event for that order
+  -   name: I receive a payment notification for that order
       type: amqp
       payload: 
           orderId: `<<orderId>>`
@@ -91,7 +91,7 @@ Feature: Tickets issuing for my Tickets Service
 
   Scenario Template: Issue a ticket for a given order
     Given I have the order "<orderId>" to buy a ticket for a desired event
-    When I receive a payment event for the order "<orderId>"
+    When I receive a payment notification for the order "<orderId>"
     Then I should generate the ticket "<ticketNumber>" for the order "<orderId>"
     And I uptade the order "<orderId>" with the ticket "<ticketNumber>" 
 
@@ -110,7 +110,7 @@ requisitions:
   variables:
     - orderId
 - publishers:
-  -   name: I receive a payment event for the order {string}
+  -   name: I receive a payment notification for the order {string}
       variables:
         - orderId
       type: amqp
