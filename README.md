@@ -39,6 +39,7 @@ Feature: Tickets issuing for my Tickets Service
 Then, we can write our step definitions with enqueuer:
 
 ```yaml
+requisitions:
 - name: I have an order to buy a ticket for a desired event
   onInit:
       store:
@@ -104,6 +105,7 @@ Feature: Tickets issuing for my Tickets Service
 Then, we can write our step definitions with enqueuer:
 
 ```yaml
+requisitions:
 - name: I have the order {string} to buy a ticket for a desired event
   variables:
     - orderId
