@@ -10,6 +10,8 @@ Install EnqueuerCucumber integration plugin:
 npm i -D enqueuer-cucumber
 ```
 
+## Usage: 
+
 Then create a Cucumber Step Definition that load its steps from Enqueuer, like:
 
 ```javascript
