@@ -3,22 +3,19 @@
 import debug from 'debug';
 import * as _ from 'lodash';
 
-import { Configuration } from 'enqueuer/js/configurations/configuration';
-import { PublisherModel } from 'enqueuer/js/models/inputs/publisher-model';
-import { RequisitionModel } from 'enqueuer/js/models/inputs/requisition-model';
-import { SubscriptionModel } from 'enqueuer/js/models/inputs/subscription-model';
+import { Configuration, InputPublisherModel, InputRequisitionModel, InputSubscriptionModel } from 'enqueuer';
 import { RequisitionFilePatternParser } from 'enqueuer/js/requisition-runners/requisition-file-pattern-parser';
 import { CucumberMatcher } from './cucumber-expressions';
 
 export interface EnqueuerStep {
-    step?: RequisitionModel | SubscriptionModel | PublisherModel;
+    step?: InputRequisitionModel | InputSubscriptionModel | InputPublisherModel;
     variables?: { [key: string]: any };
 }
 
 export class EnqueuerData {
-    private requisitionsCache: Map<string, RequisitionModel>;
-    private publishersCache: Map<string, PublisherModel>;
-    private subscriptionsCache: Map<string, SubscriptionModel>;
+    private requisitionsCache: Map<string, InputRequisitionModel>;
+    private publishersCache: Map<string, InputPublisherModel>;
+    private subscriptionsCache: Map<string, InputSubscriptionModel>;
     private requisitionFileParser: RequisitionFilePatternParser;
     private cucumberMatcher: CucumberMatcher;
     private debugger = {
@@ -27,9 +24,9 @@ export class EnqueuerData {
     };
 
     constructor() {
-        this.requisitionsCache = new Map<string, RequisitionModel>();
-        this.publishersCache = new Map<string, PublisherModel>();
-        this.subscriptionsCache = new Map<string, SubscriptionModel>();
+        this.requisitionsCache = new Map<string, InputRequisitionModel>();
+        this.publishersCache = new Map<string, InputPublisherModel>();
+        this.subscriptionsCache = new Map<string, InputSubscriptionModel>();
         this.cucumberMatcher = new CucumberMatcher();
     }
 
@@ -46,10 +43,6 @@ export class EnqueuerData {
             this.debugger.build('Publishers cache ready: %J', Array.from(this.publishersCache.keys()));
             this.debugger.build('Subscriptions cache ready: %J', Array.from(this.subscriptionsCache.keys()));
         }
-    }
-
-    public getParsingErrors() {
-        return this.requisitionFileParser.getFilesErrors();
     }
 
     public getRequisitions() {
@@ -89,7 +82,7 @@ export class EnqueuerData {
                         result.step = _.chain(requisition)
                             .omit('publishers', 'subscriptions', 'requisitions')
                             .clone()
-                            .value() as RequisitionModel;
+                            .value() as InputRequisitionModel;
                         this.mergeStepVariables(result, values);
                     }
                 }
@@ -168,7 +161,7 @@ export class EnqueuerData {
         });
     }
 
-    private buildRequisitionsCache(requisitions: Array<RequisitionModel>) {
+    private buildRequisitionsCache(requisitions: Array<InputRequisitionModel>) {
         requisitions.forEach(requisition => {
             this.requisitionsCache.set(requisition.name, requisition);
             if (requisition.publishers) {
@@ -187,7 +180,7 @@ export class EnqueuerData {
         });
     }
 
-    private cloneStep(step: RequisitionModel | SubscriptionModel | PublisherModel) {
+    private cloneStep(step: InputRequisitionModel | InputSubscriptionModel | InputPublisherModel) {
         if (step) {
             return _.clone(step);
         }

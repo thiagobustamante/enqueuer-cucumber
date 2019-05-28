@@ -2,9 +2,10 @@
 
 import assert = require("assert");
 import { Given, StepDefinitionCode, Then, When } from 'cucumber';
-import { PublisherModel } from 'enqueuer/js/models/inputs/publisher-model';
-import { RequisitionModel } from 'enqueuer/js/models/inputs/requisition-model';
-import { SubscriptionModel } from 'enqueuer/js/models/inputs/subscription-model';
+import {
+    InputPublisherModel, InputRequisitionModel, InputSubscriptionModel,
+    OutputPublisherModel, OutputRequisitionModel, OutputSubscriptionModel, OutputTestModel
+} from 'enqueuer';
 
 import debug from 'debug';
 
@@ -14,49 +15,49 @@ export class CucumberStepsBuilder {
         runtime: debug('EnqueuerCucumber:Steps')
     };
 
-    public createGivenStep(requisition: RequisitionModel) {
+    public createGivenStep(requisition: InputRequisitionModel) {
         const self = this;
         this.debugger.build('Creating Given Step for requisition <<%s>>', requisition.name);
         Given(requisition.name, this.createCucumberHook(requisition, function () {
             const requisitionReport = self.findRequisitionReport(this.testReport, requisition.name);
             self.debugger.runtime('Enqueuer report for <<%s>>: %J', requisition.name, requisitionReport);
             if (requisitionReport.tests) {
-                requisitionReport.tests.forEach((test: RequisitionModel) => {
+                requisitionReport.tests.forEach((test: OutputTestModel) => {
                     assert(test.valid, test.description);
                 });
             }
         }));
     }
 
-    public createWhenStep(publisher: PublisherModel) {
+    public createWhenStep(publisher: InputPublisherModel) {
         const self = this;
         this.debugger.build('Creating When Step for publisher <<%s>>', publisher.name);
         When(publisher.name, this.createCucumberHook(publisher, function () {
             const publisherReport = self.findPublisherReport(this.testReport, publisher.name);
             self.debugger.runtime('Enqueuer report for <<%s>>: %J', publisher.name, publisherReport);
             if (publisherReport.tests) {
-                publisherReport.tests.forEach((test: RequisitionModel) => {
+                publisherReport.tests.forEach((test: OutputTestModel) => {
                     assert(test.valid, test.description);
                 });
             }
         }));
     }
 
-    public createThenStep(subscription: SubscriptionModel) {
+    public createThenStep(subscription: InputSubscriptionModel) {
         const self = this;
         this.debugger.build('Creating Then Step for subscription <<%s>>', subscription.name);
         Then(subscription.name, this.createCucumberHook(subscription, function () {
             const subscriptionReport = self.findSubscriptionReport(this.testReport, subscription.name);
             self.debugger.runtime('Enqueuer report for <<%s>>: %J', subscription.name, subscriptionReport);
             if (subscriptionReport.tests) {
-                subscriptionReport.tests.forEach((test: RequisitionModel) => {
+                subscriptionReport.tests.forEach((test: OutputTestModel) => {
                     assert(test.valid, test.description);
                 });
             }
         }));
     }
 
-    private findSubscriptionReport(requisitions: Array<RequisitionModel>, name: string): SubscriptionModel {
+    private findSubscriptionReport(requisitions: Array<OutputRequisitionModel>, name: string): OutputSubscriptionModel {
         if (!requisitions) {
             return null;
         }
@@ -73,7 +74,7 @@ export class CucumberStepsBuilder {
         return subscriptionReport;
     }
 
-    private findPublisherReport(requisitions: Array<RequisitionModel>, name: string): PublisherModel {
+    private findPublisherReport(requisitions: Array<OutputRequisitionModel>, name: string): OutputPublisherModel {
         if (!requisitions) {
             return null;
         }
@@ -90,7 +91,7 @@ export class CucumberStepsBuilder {
         return publisherReport;
     }
 
-    private findRequisitionReport(requisitions: Array<RequisitionModel>, name: string): RequisitionModel {
+    private findRequisitionReport(requisitions: Array<OutputRequisitionModel>, name: string): OutputRequisitionModel {
         if (!requisitions) {
             return null;
         }

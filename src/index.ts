@@ -4,13 +4,10 @@ import { Before, HookScenarioResult } from 'cucumber';
 import debug from 'debug';
 import * as _ from 'lodash';
 
-import { RequisitionAdopter } from 'enqueuer/js/components/requisition-adopter';
-import { Configuration } from 'enqueuer/js/configurations/configuration';
-import { PublisherModel } from 'enqueuer/js/models/inputs/publisher-model';
-import { RequisitionModel } from 'enqueuer/js/models/inputs/requisition-model';
-import { SubscriptionModel } from 'enqueuer/js/models/inputs/subscription-model';
-import { reportModelIsPassing } from 'enqueuer/js/models/outputs/report-model';
-import { RequisitionRunner } from 'enqueuer/js/requisition-runners/requisition-runner';
+import {
+    InputPublisherModel, InputRequisitionModel, InputSubscriptionModel,
+    OutputRequisitionModel, RequisitionRunner
+} from 'enqueuer';
 import { CucumberStepsBuilder } from './cucumber-steps';
 import { EnqueuerData, EnqueuerStep } from './enqueuer-data';
 
@@ -35,16 +32,6 @@ export class EnqueuerStepDefinitions {
         this.buildSteps();
     }
 
-    public addFile(file: string) {
-        Configuration.getInstance().getFiles().push(file);
-        return this;
-    }
-
-    public addPlugin(plugin: string) {
-        Configuration.getInstance().addPlugin(plugin);
-        return this;
-    }
-
     private buildBeforeHook() {
         const self: EnqueuerStepDefinitions = this;
         Before(async function (testcase: HookScenarioResult) {
@@ -67,24 +54,9 @@ export class EnqueuerStepDefinitions {
         });
     }
 
-    private async executeEnqueuer(requisition: RequisitionModel) {
+    private async executeEnqueuer(requisition: InputRequisitionModel): Promise<Array<OutputRequisitionModel>> {
         this.debugger('Executing requisition <<%s>> in Enqueuer', requisition.name);
-        const configuration = Configuration.getInstance();
-        const enqueuerRequisition = new RequisitionAdopter(
-            {
-                name: 'enqueuer',
-                parallel: configuration.isParallel(),
-                requisitions: [requisition],
-                timeout: -1
-            }).getRequisition();
-        const parsingErrors = this.enquererData.getParsingErrors();
-        const finalReports = await new RequisitionRunner(enqueuerRequisition, 0).run();
-
-        finalReports.forEach(report => {
-            report.tests = parsingErrors;
-            report.valid = report.valid && reportModelIsPassing(report);
-        });
-
+        const finalReports = await new RequisitionRunner(requisition).run();
         this.debugger('Report execution for requisition <<%s>>: %J', requisition.name, finalReports);
         return finalReports;
     }
@@ -93,26 +65,26 @@ export class EnqueuerStepDefinitions {
         this.debugger('Building enqueuer requisition for test execution: <<%s>>', testcase.pickle.name);
         this.debugger('Cucumber metadata for test: %J', testcase);
         const requisitionStep = this.enquererData.getRequisitionStep(testcase.pickle.name, true);
-        const requisition = this.fromEnqueuerStep(requisitionStep.step as RequisitionModel, requisitionStep) as RequisitionModel;
+        const requisition = this.fromEnqueuerStep(requisitionStep.step as InputRequisitionModel, requisitionStep) as InputRequisitionModel;
 
         testcase.pickle.steps.forEach(step => {
             const innerRequisition = this.enquererData.getRequisitionStep(step.text);
             let stepMatched = false;
             if (innerRequisition.step) {
-                requisition.requisitions.push(this.fromEnqueuerStep(requisition, innerRequisition) as RequisitionModel);
+                requisition.requisitions.push(this.fromEnqueuerStep(requisition, innerRequisition) as InputRequisitionModel);
                 stepMatched = true;
             }
             if (!stepMatched) {
                 const publisher = this.enquererData.getPublisherStep(step.text);
                 if (publisher.step) {
-                    requisition.publishers.push(this.fromEnqueuerStep(requisition, publisher) as PublisherModel);
+                    requisition.publishers.push(this.fromEnqueuerStep(requisition, publisher) as InputPublisherModel);
                     stepMatched = true;
                 }
             }
             if (!stepMatched) {
                 const subscription = this.enquererData.getSubscriptionStep(step.text);
                 if (subscription.step) {
-                    requisition.subscriptions.push(this.fromEnqueuerStep(requisition, subscription) as SubscriptionModel);
+                    requisition.subscriptions.push(this.fromEnqueuerStep(requisition, subscription) as InputSubscriptionModel);
                 }
             }
         });
@@ -121,7 +93,7 @@ export class EnqueuerStepDefinitions {
         return requisition;
     }
 
-    private fromEnqueuerStep(requisition: RequisitionModel, requisitionStep: EnqueuerStep) {
+    private fromEnqueuerStep(requisition: InputRequisitionModel, requisitionStep: EnqueuerStep) {
         if (requisitionStep.variables) {
             requisition.store = _.merge(requisition.store, requisitionStep.variables);
         }
