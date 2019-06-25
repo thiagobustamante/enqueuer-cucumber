@@ -1,6 +1,6 @@
 {
   "name": "enqueuer-cucumber",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "Plugin to implement cucumber steps as enqueuer requisitions",
   "main": "./dist/index.js",
   "typings": "./dist/index.d.ts",
@@ -60,7 +60,7 @@
     "codecov": "^3.3.0",
     "cross-env": "^5.2.0",
     "cucumber": "^5.1.0",
-    "enqueuer": "^4.7.2",
+    "enqueuer": "^5.0.0",
     "mocha": "^5.2.0",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.3",
@@ -72,7 +72,7 @@
   },
   "peerDependencies": {
     "cucumber": "^5.1.0",
-    "enqueuer": "^4.7.2"
+    "enqueuer": "^5.0.0"
   },
   "repository": {
     "type": "git",
