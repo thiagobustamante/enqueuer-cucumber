@@ -1,6 +1,6 @@
 {
   "name": "enqueuer-cucumber",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Plugin to implement cucumber steps as enqueuer requisitions",
   "main": "./dist/index.js",
   "typings": "./dist/index.d.ts",
@@ -46,33 +46,33 @@
   "dependencies": {
     "assert": "^2.0.0",
     "debug": "^4.1.1",
-    "lodash": "^4.17.11"
+    "lodash": "^4.17.15"
   },
   "devDependencies": {
-    "@types/assert": "^1.4.2",
-    "@types/chai": "^4.1.7",
-    "@types/cucumber": "^4.0.5",
-    "@types/debug": "^4.1.4",
-    "@types/lodash": "^4.14.119",
-    "@types/mocha": "^5.2.5",
-    "@types/node": "^12.0.2",
+    "@types/assert": "^1.4.3",
+    "@types/chai": "^4.2.0",
+    "@types/cucumber": "^4.0.7",
+    "@types/debug": "^4.1.5",
+    "@types/lodash": "^4.14.138",
+    "@types/mocha": "^5.2.7",
+    "@types/node": "^12.7.2",
     "chai": "^4.2.0",
     "codecov": "^3.3.0",
     "cross-env": "^5.2.0",
     "cucumber": "^5.1.0",
-    "enqueuer": "^5.0.0",
+    "enqueuer": "^5.0.2",
     "mocha": "^5.2.0",
     "nyc": "^14.1.1",
-    "rimraf": "^2.6.3",
-    "source-map-support": "^0.5.9",
+    "rimraf": "^2.7.1",
+    "source-map-support": "^0.5.13",
     "ts-node": "^7.0.1",
-    "tslint": "^5.15.0",
+    "tslint": "^5.19.0",
     "tslint-config-prettier": "^1.17.0",
-    "typescript": "^3.2.2"
+    "typescript": "^3.6.2"
   },
   "peerDependencies": {
     "cucumber": "^5.1.0",
-    "enqueuer": "^5.0.0"
+    "enqueuer": "^5.0.2"
   },
   "repository": {
     "type": "git",

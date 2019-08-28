@@ -16,6 +16,7 @@ export class EnqueuerData {
     private requisitionsCache: Map<string, InputRequisitionModel>;
     private publishersCache: Map<string, InputPublisherModel>;
     private subscriptionsCache: Map<string, InputSubscriptionModel>;
+    private groupsCache: Map<string, InputRequisitionModel>;
     private requisitionFileParser: RequisitionFilePatternParser;
     private cucumberMatcher: CucumberMatcher;
     private debugger = {
@@ -27,6 +28,7 @@ export class EnqueuerData {
         this.requisitionsCache = new Map<string, InputRequisitionModel>();
         this.publishersCache = new Map<string, InputPublisherModel>();
         this.subscriptionsCache = new Map<string, InputSubscriptionModel>();
+        this.groupsCache = new Map<string, InputRequisitionModel>();
         this.cucumberMatcher = new CucumberMatcher();
     }
 
@@ -42,6 +44,7 @@ export class EnqueuerData {
             this.debugger.build('Requisitions cache ready: %J', Array.from(this.requisitionsCache.keys()));
             this.debugger.build('Publishers cache ready: %J', Array.from(this.publishersCache.keys()));
             this.debugger.build('Subscriptions cache ready: %J', Array.from(this.subscriptionsCache.keys()));
+            this.debugger.build('Groups cache ready: %J', Array.from(this.groupsCache.keys()));
         }
     }
 
@@ -69,6 +72,14 @@ export class EnqueuerData {
         return Array.from(this.subscriptionsCache.keys());
     }
 
+    public getGroups() {
+        return Array.from(this.groupsCache.values());
+    }
+
+    public getGroupNames() {
+        return Array.from(this.groupsCache.keys());
+    }
+
     public getRequisitionStep(name: string, createIfNotExist?: boolean) {
         this.debugger.runtime('Searching for a matching requisition step for <<%s>>', name);
         const result: EnqueuerStep = {};
@@ -80,7 +91,7 @@ export class EnqueuerData {
                     const requisition = this.requisitionsCache.get(reqName);
                     if (requisition.variables && requisition.variables.length >= values.length) {
                         result.step = _.chain(requisition)
-                            .omit('publishers', 'subscriptions', 'requisitions')
+                            .omit('publishers', 'subscriptions', 'requisitions', 'groups')
                             .clone()
                             .value() as InputRequisitionModel;
                         this.mergeStepVariables(result, values);
@@ -92,6 +103,7 @@ export class EnqueuerData {
             result.step.publishers = [];
             result.step.subscriptions = [];
             result.step.requisitions = [];
+            delete result.step.groups;
         } else if (createIfNotExist) {
             result.step = this.getDefaultRequisition(name);
         }
@@ -145,13 +157,35 @@ export class EnqueuerData {
         return result;
     }
 
-    private getDefaultRequisition(name: string): any {
-        return {
+    public getGroupStep(name: string) {
+        this.debugger.runtime('Searching for a matching group step for <<%s>>', name);
+        const result: EnqueuerStep = {};
+        result.step = this.cloneStep(this.groupsCache.get(name));
+        if (!result.step) {
+            for (const groupName of this.getSubscriptionNames()) {
+                const values: Array<string> = this.cucumberMatcher.match(groupName, name);
+                if (values && values.length) {
+                    const group = this.groupsCache.get(groupName);
+                    if (group.variables && group.variables.length >= values.length) {
+                        result.step = _.clone(group);
+                        this.mergeStepVariables(result, values);
+                    }
+                }
+            }
+        }
+        if (result.step) {
+            this.debugger.runtime('Group Step for <<%s>>: %J', name, result);
+        }
+        return result;
+    }
+
+    public getDefaultRequisition(name: string): any {
+        return _.clone({
             name: name,
             publishers: [],
             requisitions: [],
             subscriptions: []
-        };
+        });
     }
 
     private mergeStepVariables(result: EnqueuerStep, values: Array<string>) {
@@ -172,6 +206,11 @@ export class EnqueuerData {
             if (requisition.subscriptions) {
                 requisition.subscriptions.forEach(subscription => {
                     this.subscriptionsCache.set(subscription.name, subscription);
+                });
+            }
+            if (requisition.groups) {
+                requisition.groups.forEach((group: InputRequisitionModel) => {
+                    this.groupsCache.set(group.name, group);
                 });
             }
             if (requisition.requisitions) {

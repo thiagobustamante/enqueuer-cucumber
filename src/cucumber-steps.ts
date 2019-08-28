@@ -6,8 +6,10 @@ import {
     InputPublisherModel, InputRequisitionModel, InputSubscriptionModel,
     OutputPublisherModel, OutputRequisitionModel, OutputSubscriptionModel, OutputTestModel
 } from 'enqueuer';
+import * as _ from 'lodash';
 
 import debug from 'debug';
+import { ReportModel } from "enqueuer/js/models/outputs/report-model";
 
 export class CucumberStepsBuilder {
     private debugger = {
@@ -19,13 +21,7 @@ export class CucumberStepsBuilder {
         const self = this;
         this.debugger.build('Creating Given Step for requisition <<%s>>', requisition.name);
         Given(requisition.name, this.createCucumberHook(requisition, function () {
-            const requisitionReport = self.findRequisitionReport(this.testReport, requisition.name);
-            self.debugger.runtime('Enqueuer report for <<%s>>: %J', requisition.name, requisitionReport);
-            if (requisitionReport.tests) {
-                requisitionReport.tests.forEach((test: OutputTestModel) => {
-                    assert(test.valid, test.description);
-                });
-            }
+            self.checkRequisitionExecution(this.testReport, requisition);
         }));
     }
 
@@ -33,13 +29,7 @@ export class CucumberStepsBuilder {
         const self = this;
         this.debugger.build('Creating When Step for publisher <<%s>>', publisher.name);
         When(publisher.name, this.createCucumberHook(publisher, function () {
-            const publisherReport = self.findPublisherReport(this.testReport, publisher.name);
-            self.debugger.runtime('Enqueuer report for <<%s>>: %J', publisher.name, publisherReport);
-            if (publisherReport.tests) {
-                publisherReport.tests.forEach((test: OutputTestModel) => {
-                    assert(test.valid, test.description);
-                });
-            }
+            self.checkPublisherExecution(this.testReport, publisher);
         }));
     }
 
@@ -47,14 +37,64 @@ export class CucumberStepsBuilder {
         const self = this;
         this.debugger.build('Creating Then Step for subscription <<%s>>', subscription.name);
         Then(subscription.name, this.createCucumberHook(subscription, function () {
-            const subscriptionReport = self.findSubscriptionReport(this.testReport, subscription.name);
-            self.debugger.runtime('Enqueuer report for <<%s>>: %J', subscription.name, subscriptionReport);
-            if (subscriptionReport.tests) {
-                subscriptionReport.tests.forEach((test: OutputTestModel) => {
-                    assert(test.valid, test.description);
-                });
+            self.checkSubscriptionExecution(this.testReport, subscription);
+        }));
+    }
+
+    public createGroupStep(group: InputRequisitionModel) {
+        const step = this.getCucumberStepFunction(group.step);
+        const self = this;
+        this.debugger.build('Creating Then Step for group <<%s>>', group.name);
+        step(group.name, this.createCucumberHook(group, function () {
+            if (group.subscriptions) {
+                group.subscriptions.forEach(subscription => self.checkSubscriptionExecution(this.testReport, subscription));
+            }
+            if (group.publishers) {
+                group.publishers.forEach(publisher => self.checkPublisherExecution(this.testReport, publisher));
             }
         }));
+    }
+
+    private checkRequisitionExecution(testReport: Array<OutputRequisitionModel>, requisition: InputRequisitionModel) {
+        const requisitionReport = this.findRequisitionReport(testReport, requisition.name);
+        this.checkTests(requisition, requisitionReport);
+    }
+
+
+    private checkSubscriptionExecution(testReport: Array<OutputRequisitionModel>, subscription: InputSubscriptionModel) {
+        const subscriptionReport = this.findSubscriptionReport(testReport, subscription.name);
+        this.checkTests(subscription, subscriptionReport);
+    }
+
+    private checkPublisherExecution(testReport: Array<OutputRequisitionModel>, publisher: InputPublisherModel) {
+        const publisherReport = this.findPublisherReport(testReport, publisher.name);
+        this.checkTests(publisher, publisherReport);
+    }
+
+    private checkTests(step: InputSubscriptionModel | InputPublisherModel | InputRequisitionModel, testReport: ReportModel) {
+        this.debugger.runtime('Enqueuer report for <<%s>>: %J', step.name, testReport);
+        if (testReport && testReport.hooks) {
+            _.values(testReport.hooks).forEach(hook => {
+                hook.tests.forEach((test: OutputTestModel) => {
+                    assert(test.valid, test.description);
+                });
+            });
+        }
+    }
+
+    private getCucumberStepFunction(name: string) {
+        if (name) {
+            if (name.toLowerCase() === 'then') {
+                return Then;
+            }
+            if (name.toLowerCase() === 'when') {
+                return When;
+            }
+            if (name.toLowerCase() === 'Given') {
+                return Given;
+            }
+        }
+        return Then;
     }
 
     private findSubscriptionReport(requisitions: Array<OutputRequisitionModel>, name: string): OutputSubscriptionModel {
