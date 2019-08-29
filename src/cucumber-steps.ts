@@ -52,6 +52,9 @@ export class CucumberStepsBuilder {
             if (group.publishers) {
                 group.publishers.forEach(publisher => self.checkPublisherExecution(this.testReport, publisher));
             }
+            if (group.requisitions) {
+                group.requisitions.forEach(requisition => self.checkRequisitionExecution(this.testReport, requisition));
+            }
         }));
     }
 
