@@ -119,6 +119,21 @@ export class EnqueuerStepDefinitions {
         if (req.subscriptions) {
             req.subscriptions.forEach(s => mainRequisition.subscriptions.push(s));
         }
+        this.applyGroupTimeout(req);
+    }
+
+    private applyGroupTimeout(group: InputRequisitionModel) {
+        if (group.timeout) {
+            if (group.requisitions) {
+                group.requisitions.forEach(r => r.timeout = group.timeout);
+            }
+            if (group.publishers) {
+                group.publishers.forEach(p => p.timeout = group.timeout);
+            }
+            if (group.subscriptions) {
+                group.subscriptions.forEach(s => s.timeout = group.timeout);
+            }
+        }
     }
 
     private fromEnqueuerStep(requisition: InputRequisitionModel, requisitionStep: EnqueuerStep) {
@@ -132,6 +147,9 @@ export class EnqueuerStepDefinitions {
         let mainRequisition = requisition.requisitions.find(req => req.name === MAIN_REQUISITION);
         if (!mainRequisition) {
             mainRequisition = this.enquererData.getDefaultRequisition(MAIN_REQUISITION);
+            if (requisition.timeout) {
+                mainRequisition.timeout = requisition.timeout;
+            }
             requisition.requisitions.push(mainRequisition);
         }
 
