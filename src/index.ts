@@ -96,15 +96,19 @@ export class EnqueuerStepDefinitions {
                 }
             }
             if (!stepMatched) {
-                const group = this.enquererData.getGroupStep(step.text);
-                if (group.step) {
-                    this.processEnqueuerGroup(requisition, group);
-                }
+                this.buildEnqueuerGroup(requisition, step.text);
             }
         });
 
         this.debugger('Enqueuer requisition created: %J', requisition);
         return requisition;
+    }
+
+    private buildEnqueuerGroup(requisition: InputRequisitionModel, name: string) {
+        const group = this.enquererData.getGroupStep(name);
+        if (group.step) {
+            this.processEnqueuerGroup(requisition, group);
+        }
     }
 
     private processEnqueuerGroup(requisition: InputRequisitionModel, group: EnqueuerStep) {
@@ -118,6 +122,9 @@ export class EnqueuerStepDefinitions {
         }
         if (req.subscriptions) {
             req.subscriptions.forEach(s => mainRequisition.subscriptions.push(s));
+        }
+        if (req.group) {
+            this.buildEnqueuerGroup(requisition, req.group);
         }
         this.applyGroupTimeout(req);
     }

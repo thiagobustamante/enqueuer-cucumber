@@ -162,7 +162,7 @@ export class EnqueuerData {
         const result: EnqueuerStep = {};
         result.step = this.cloneStep(this.groupsCache.get(name));
         if (!result.step) {
-            for (const groupName of this.getSubscriptionNames()) {
+            for (const groupName of this.getGroupNames()) {
                 const values: Array<string> = this.cucumberMatcher.match(groupName, name);
                 if (values && values.length) {
                     const group = this.groupsCache.get(groupName);
