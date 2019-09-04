@@ -123,8 +123,10 @@ export class EnqueuerStepDefinitions {
         if (req.subscriptions) {
             req.subscriptions.forEach(s => mainRequisition.subscriptions.push(s));
         }
-        if (req.group) {
-            this.buildEnqueuerGroup(requisition, req.group);
+        if (req.useGroup) {
+            _.castArray(req.useGroup).forEach(usegroup => {
+                this.buildEnqueuerGroup(requisition, usegroup);
+            });
         }
         this.applyGroupTimeout(req);
     }
