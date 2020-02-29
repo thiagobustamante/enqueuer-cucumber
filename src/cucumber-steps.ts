@@ -44,7 +44,7 @@ export class CucumberStepsBuilder {
     public createGroupStep(group: InputRequisitionModel) {
         const step = this.getCucumberStepFunction(group.step);
         const self = this;
-        this.debugger.build('Creating Then Step for group <<%s>>', group.name);
+        this.debugger.build('Creating <<%s>> Step for group <<%s>>', group.step, group.name);
         step(group.name, this.createCucumberHook(group, function () {
             if (group.subscriptions) {
                 group.subscriptions.forEach(subscription => self.checkSubscriptionExecution(this.testReport, subscription));
@@ -93,7 +93,7 @@ export class CucumberStepsBuilder {
             if (name.toLowerCase() === 'when') {
                 return When;
             }
-            if (name.toLowerCase() === 'Given') {
+            if (name.toLowerCase() === 'given') {
                 return Given;
             }
         }
@@ -106,11 +106,13 @@ export class CucumberStepsBuilder {
         }
         let subscriptionReport = null;
         for (const requisition of requisitions) {
-            subscriptionReport = requisition.subscriptions.find((sub) => name === sub.name);
-            if (!subscriptionReport) {
-                subscriptionReport = this.findSubscriptionReport(requisition.requisitions, name);
-                if (subscriptionReport) {
-                    return subscriptionReport;
+            if (requisition.subscriptions) {
+                subscriptionReport = requisition.subscriptions.find((sub) => name === sub.name);
+                if (!subscriptionReport) {
+                    subscriptionReport = this.findSubscriptionReport(requisition.requisitions, name);
+                    if (subscriptionReport) {
+                        return subscriptionReport;
+                    }
                 }
             }
         }
@@ -123,11 +125,13 @@ export class CucumberStepsBuilder {
         }
         let publisherReport = null;
         for (const requisition of requisitions) {
-            publisherReport = requisition.publishers.find((pub) => name === pub.name);
-            if (!publisherReport) {
-                publisherReport = this.findPublisherReport(requisition.requisitions, name);
-                if (publisherReport) {
-                    return publisherReport;
+            if (requisition.publishers) {
+                publisherReport = requisition.publishers.find((pub) => name === pub.name);
+                if (!publisherReport) {
+                    publisherReport = this.findPublisherReport(requisition.requisitions, name);
+                    if (publisherReport) {
+                        return publisherReport;
+                    }
                 }
             }
         }
