@@ -106,13 +106,12 @@ export class CucumberStepsBuilder {
         }
         let subscriptionReport = null;
         for (const requisition of requisitions) {
-            if (requisition.subscriptions) {
-                subscriptionReport = requisition.subscriptions.find((sub) => name === sub.name);
-                if (!subscriptionReport) {
-                    subscriptionReport = this.findSubscriptionReport(requisition.requisitions, name);
-                    if (subscriptionReport) {
-                        return subscriptionReport;
-                    }
+            const subscriptions = requisition.subscriptions || [];
+            subscriptionReport = subscriptions.find((sub) => name === sub.name);
+            if (!subscriptionReport) {
+                subscriptionReport = this.findSubscriptionReport(requisition.requisitions, name);
+                if (subscriptionReport) {
+                    return subscriptionReport;
                 }
             }
         }
@@ -125,15 +124,15 @@ export class CucumberStepsBuilder {
         }
         let publisherReport = null;
         for (const requisition of requisitions) {
-            if (requisition.publishers) {
-                publisherReport = requisition.publishers.find((pub) => name === pub.name);
-                if (!publisherReport) {
-                    publisherReport = this.findPublisherReport(requisition.requisitions, name);
-                    if (publisherReport) {
-                        return publisherReport;
-                    }
+            const publishers = requisition.publishers || [];
+            publisherReport = publishers.find((pub) => name === pub.name);
+            if (!publisherReport) {
+                publisherReport = this.findPublisherReport(requisition.requisitions, name);
+                if (publisherReport) {
+                    return publisherReport;
                 }
             }
+
         }
         return publisherReport;
     }
