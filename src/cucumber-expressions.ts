@@ -1,6 +1,6 @@
 'use strict';
 
-const { CucumberExpression, ParameterTypeRegistry } = require('cucumber-expressions');
+const { CucumberExpression, ParameterTypeRegistry } = require('@cucumber/cucumber-expressions');
 
 export class CucumberMatcher {
     public match(expression: string, text: string) {

@@ -1,6 +1,6 @@
 'use strict';
 
-import { Before, HookScenarioResult } from 'cucumber';
+import { Before } from '@cucumber/cucumber';
 import debug from 'debug';
 import * as _ from 'lodash';
 
@@ -10,6 +10,7 @@ import {
 } from 'enqueuer';
 import { CucumberStepsBuilder } from './cucumber-steps';
 import { EnqueuerData, EnqueuerStep } from './enqueuer-data';
+import { ITestCaseHookParameter } from '@cucumber/cucumber/lib/support_code_library_builder/types';
 
 debug.formatters.J = (v) => {
     return JSON.stringify(v, null, 2);
@@ -35,7 +36,7 @@ export class EnqueuerStepDefinitions {
 
     private buildBeforeHook() {
         const self: EnqueuerStepDefinitions = this;
-        Before(async function (testcase: HookScenarioResult) {
+        Before(async function (testcase) {
             const requisition = self.buildEnqueuerRequisition(testcase);
             if (requisition) {
                 this.testReport = await self.executeEnqueuer(requisition);
@@ -65,7 +66,7 @@ export class EnqueuerStepDefinitions {
         return finalReports;
     }
 
-    private buildEnqueuerRequisition(testcase: HookScenarioResult) {
+    private buildEnqueuerRequisition(testcase: ITestCaseHookParameter) {
         this.debugger('Building enqueuer requisition for test execution: <<%s>>', testcase.pickle.name);
         this.debugger('Cucumber metadata for test: %J', testcase);
         const requisitionStep = this.enquererData.getRequisitionStep(testcase.pickle.name, true);

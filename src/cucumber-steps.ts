@@ -1,7 +1,7 @@
 'use strict';
 
 import assert = require("assert");
-import { Given, StepDefinitionCode, Then, When } from 'cucumber';
+import { Given, Then, When } from '@cucumber/cucumber';
 import {
     InputPublisherModel, InputRequisitionModel, InputSubscriptionModel,
     OutputPublisherModel, OutputRequisitionModel, OutputSubscriptionModel, OutputTestModel
@@ -154,7 +154,7 @@ export class CucumberStepsBuilder {
         return requisitionReport;
     }
 
-    private createCucumberHook(step: any, stepDefinition: StepDefinitionCode) {
+    private createCucumberHook(step: any, stepDefinition: Function) {
         const params = (step.variables || []).join(',');
         // tslint:disable-next-line:no-eval
         return eval(`(function(){ return function(${params}) {return stepDefinition.apply(this);}})();`);
