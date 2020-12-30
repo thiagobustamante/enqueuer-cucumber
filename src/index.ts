@@ -16,6 +16,8 @@ debug.formatters.J = (v) => {
     return JSON.stringify(v, null, 2);
 };
 
+const PUBLISHERS_REQUISITION = 'Cucumber_Publishers_requisition';
+const SUBSCRIPTIONS_REQUISITION = 'Cucumber_Subscriptions_requisition';
 const MAIN_REQUISITION = 'Cucumber_Main_requisition';
 export class EnqueuerStepDefinitions {
     private enquererData: EnqueuerData;
@@ -83,16 +85,14 @@ export class EnqueuerStepDefinitions {
             if (!stepMatched) {
                 const publisher = this.enquererData.getPublisherStep(step.text);
                 if (publisher.step) {
-                    const mainRequisition = this.getMainRequisition(requisition);
-                    this.addPublisher(mainRequisition, this.fromEnqueuerStep(requisition, publisher) as InputPublisherModel);
+                    this.addPublisher(requisition, this.fromEnqueuerStep(requisition, publisher) as InputPublisherModel);
                     stepMatched = true;
                 }
             }
             if (!stepMatched) {
                 const subscription = this.enquererData.getSubscriptionStep(step.text);
                 if (subscription.step) {
-                    const mainRequisition = this.getMainRequisition(requisition);
-                    mainRequisition.subscriptions.push(this.fromEnqueuerStep(requisition, subscription) as InputSubscriptionModel);
+                    this.addSubscription(requisition, this.fromEnqueuerStep(requisition, subscription) as InputSubscriptionModel);
                     stepMatched = true;
                 }
             }
@@ -114,15 +114,14 @@ export class EnqueuerStepDefinitions {
 
     private processEnqueuerGroup(requisition: InputRequisitionModel, group: EnqueuerStep) {
         const req = this.fromEnqueuerStep(requisition, group) as InputRequisitionModel;
-        const mainRequisition = this.getMainRequisition(requisition);
         if (req.requisitions) {
             req.requisitions.forEach(r => requisition.requisitions.push(r));
         }
         if (req.publishers) {
-            req.publishers.forEach(p => this.addPublisher(mainRequisition, p));
+            req.publishers.forEach(p => this.addPublisher(requisition, p));
         }
         if (req.subscriptions) {
-            req.subscriptions.forEach(s => mainRequisition.subscriptions.push(s));
+            req.subscriptions.forEach(s => this.addSubscription(requisition, s));
         }
         if (req.useGroup) {
             _.castArray(req.useGroup).forEach(usegroup => {
@@ -160,15 +159,51 @@ export class EnqueuerStepDefinitions {
             if (requisition.timeout) {
                 mainRequisition.timeout = requisition.timeout;
             }
+            mainRequisition.parallel = true;
             requisition.requisitions.push(mainRequisition);
         }
 
         return mainRequisition;
     }
 
+
+    private getPublishersRequisition(requisition: InputRequisitionModel) {
+        const mainRequisition = this.getMainRequisition(requisition);
+        let publishersRequisition = mainRequisition.requisitions.find(req => req.name === PUBLISHERS_REQUISITION);
+        if (!publishersRequisition) {
+            publishersRequisition = this.enquererData.getDefaultRequisition(PUBLISHERS_REQUISITION);
+            if (requisition.timeout) {
+                publishersRequisition.timeout = requisition.timeout;
+            }
+            mainRequisition.requisitions.push(publishersRequisition);
+        }
+
+        return publishersRequisition;
+    }
+
+    private getSubscriptionsRequisition(requisition: InputRequisitionModel) {
+        const mainRequisition = this.getMainRequisition(requisition);
+        let subscriptionsRequisition = mainRequisition.requisitions.find(req => req.name === SUBSCRIPTIONS_REQUISITION);
+        if (!subscriptionsRequisition) {
+            subscriptionsRequisition = this.enquererData.getDefaultRequisition(SUBSCRIPTIONS_REQUISITION);
+            if (requisition.timeout) {
+                subscriptionsRequisition.timeout = requisition.timeout;
+            }
+            mainRequisition.requisitions.push(subscriptionsRequisition);
+        }
+
+        return subscriptionsRequisition;
+    }
+    
     private addPublisher(requisition: InputRequisitionModel, publisher: InputPublisherModel) {
+        const publishersRequisition = this.getPublishersRequisition(requisition);
         const wrapper = this.enquererData.getDefaultRequisition(`requisition - ${publisher.name}`);
         wrapper.publishers.push(publisher);
-        requisition.requisitions.push(wrapper);
+        publishersRequisition.requisitions.push(wrapper);
+    }
+
+    private addSubscription(requisition: InputRequisitionModel, subscription: InputSubscriptionModel) {
+        const subscriptionsRequisition = this.getSubscriptionsRequisition(requisition);
+        subscriptionsRequisition.subscriptions.push(subscription);
     }
 }
