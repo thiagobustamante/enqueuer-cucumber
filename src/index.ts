@@ -84,7 +84,7 @@ export class EnqueuerStepDefinitions {
                 const publisher = this.enquererData.getPublisherStep(step.text);
                 if (publisher.step) {
                     const mainRequisition = this.getMainRequisition(requisition);
-                    mainRequisition.publishers.push(this.fromEnqueuerStep(requisition, publisher) as InputPublisherModel);
+                    this.addPublisher(mainRequisition, this.fromEnqueuerStep(requisition, publisher) as InputPublisherModel);
                     stepMatched = true;
                 }
             }
@@ -119,7 +119,7 @@ export class EnqueuerStepDefinitions {
             req.requisitions.forEach(r => requisition.requisitions.push(r));
         }
         if (req.publishers) {
-            req.publishers.forEach(p => mainRequisition.publishers.push(p));
+            req.publishers.forEach(p => this.addPublisher(mainRequisition, p));
         }
         if (req.subscriptions) {
             req.subscriptions.forEach(s => mainRequisition.subscriptions.push(s));
@@ -164,5 +164,11 @@ export class EnqueuerStepDefinitions {
         }
 
         return mainRequisition;
+    }
+
+    private addPublisher(requisition: InputRequisitionModel, publisher: InputPublisherModel) {
+        const wrapper = this.enquererData.getDefaultRequisition(`requisition - ${publisher.name}`);
+        wrapper.publishers.push(publisher);
+        requisition.requisitions.push(wrapper);
     }
 }

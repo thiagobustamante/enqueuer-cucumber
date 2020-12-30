@@ -15,14 +15,16 @@ npm i -D enqueuer-cucumber
 Then create a Cucumber Step Definition that load its steps from Enqueuer, like:
 
 ```javascript
+const { Configuration } = require('enqueuer');
 const { EnqueuerStepDefinitions } = require('enqueuer-cucumber');
 const path = require('path');
 const enqueuerFiles = path.join(__dirname, './enqueuer/*.yaml');
 
-new EnqueuerStepDefinitions()
-    .addFile(enqueuerFiles)
+Configuration.getInstance()
+    .addFiles(enqueuerFiles);
     .addPlugin('enqueuer-plugin-amqp')
-    .build();
+
+new EnqueuerStepDefinitions().build();
 ```
 In the above example, we are saying to EnqueuerCucumber plugin to load its steps according to the expression ```./enqueuer/*.yaml```.
 
